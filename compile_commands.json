@@ -1,0 +1,58 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-c",
+      "-std=c++20",
+      "-Wfatal-errors",
+      "-o",
+      "sam",
+      "main.cc"
+    ],
+    "directory": "/home/ndate/Research/osam-graph",
+    "file": "/home/ndate/Research/osam-graph/main.cc",
+    "output": "/home/ndate/Research/osam-graph/sam"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-c",
+      "-std=c++20",
+      "-Wfatal-errors",
+      "-o",
+      "sam",
+      "sam.cc"
+    ],
+    "directory": "/home/ndate/Research/osam-graph",
+    "file": "/home/ndate/Research/osam-graph/sam.cc",
+    "output": "/home/ndate/Research/osam-graph/sam"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-c",
+      "-std=c++20",
+      "-Wfatal-errors",
+      "-o",
+      "sam",
+      "tree.cc"
+    ],
+    "directory": "/home/ndate/Research/osam-graph",
+    "file": "/home/ndate/Research/osam-graph/tree.cc",
+    "output": "/home/ndate/Research/osam-graph/sam"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-c",
+      "-std=c++20",
+      "-Wfatal-errors",
+      "-o",
+      "sam",
+      "graph.cc"
+    ],
+    "directory": "/home/ndate/Research/osam-graph",
+    "file": "/home/ndate/Research/osam-graph/graph.cc",
+    "output": "/home/ndate/Research/osam-graph/sam"
+  }
+]
