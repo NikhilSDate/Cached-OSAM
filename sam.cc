@@ -11,7 +11,7 @@ int next;
 block* sam;
 bool* used;
 
-std::unordered_map<int, block> cache;
+std::unordered_map<int, block*> cache;
 
 int reads = 0;
 int writes = 0;
@@ -185,6 +185,92 @@ std::pair<int, block> splay(int a, int b, int x) {
   }
 }
 
+// splays tree, but returns from cache at last level if hit
+// else puts into cache
+// in either case, returns the writeback address/cache tag
+int counter_cache = 0;
+block* splay_cache(int a, int b, int x) {
+  while (true) {
+    ++counter;
+
+    if (cache.contains(x)) {
+      link(a, b, x);
+      block* b = cache[x];
+      assert((block_type)(*b)[0] == block_type::DATA);
+      return b;
+    }
+
+    const auto bl = read(x);
+    const auto tx = (block_type)bl[0];
+    const auto y = bl[1];
+    const auto c = bl[2];
+
+    if (tx == block_type::DATA) {
+      int x_ = alloc();
+      link(a, b, x_);
+
+      // put data into the cache
+      cache[x_] = new block(bl);
+      return cache[x_];
+    }
+
+    if (cache.contains(y)) {
+      int x_ = alloc();
+      link(a, b, x_);
+      link(x_, c, y);
+      
+      return cache[y];
+    }
+
+    const auto bl2 = read(y);
+    const auto ty = (block_type)bl2[0];
+    const auto z = bl2[1];
+    const auto d = bl2[2];
+    if (ty == block_type::DATA) {
+      /**
+       * zig splay:
+       *
+       *     y            x
+       *    / \          / \
+       *   x   c  ==>   a   y
+       *  / \              / \
+       * a   b            b   c
+       */
+
+      int x_ = alloc();
+      int y_ = alloc();
+
+      link(b, c, y_);
+      link(a, y_, x_);
+
+      cache[x_] = new block(bl2);
+      return cache[x_];
+    }
+
+    /**
+     * zig-zag splay:
+     *       z               x
+     *      / \             / \
+     *     y   d           /   \
+     *    / \      ==>    y     z
+     *   c   x           / \   / \
+     *      / \         a   b c   d
+     *     a   b
+     */
+
+    int x_ = z;
+    int y_ = alloc();
+    int z_ = alloc();
+
+    link(a, b, y_);
+    link(c, d, z_);
+
+    a = y_;
+    b = z_;
+    x = x_;
+  }
+}
+
 std::tuple<int, int, block> deref(int x) {
   const auto bl = read(x);
   const auto t = (block_type)bl[0];
@@ -200,21 +286,34 @@ std::tuple<int, int, block> deref(int x) {
   }
 }
 
-block& deref_cache(int& x) {
-  if (!cache.contains(x)) {
-    auto [r, wb, bl] = deref(x);
-    assert(r == wb);
-    x = r;
-    cache.at(wb) = bl;
+block* deref_cache(int* x) {
+  if (cache.contains(*x)) {
+    return cache.at(*x);
   }
-  return cache.at(x);
+
+  const auto bl = read(*x);
+  const auto t = (block_type)bl[0];
+  const auto p = bl[1];
+  const auto s = bl[2];
+
+  const auto x_ = alloc();
+  *x = x_;
+
+  if (t == block_type::DATA) {
+    cache[x_] = new block(bl);
+    return cache.at(x_);
+  } else {
+    return splay_cache(x_, s, p);
+  }
 }
 
 void cache_evict(int x) {
   if (!cache.contains(x)) {
     return;
   }
-  write(x, cache.at(x));
+  auto data = cache.at(x);
+  write(x, *data);
+  delete data;
   cache.erase(x);
 }
 

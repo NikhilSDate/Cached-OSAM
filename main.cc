@@ -6,7 +6,7 @@
 int main() {
   constexpr int sam_size = 1 << 26;
 
-  srand(time(NULL));
+  srand(123);
 
   debug_header();
   for (int lgn = 8; lgn < 16; ++lgn) {
@@ -27,7 +27,8 @@ int main() {
     debug_reset();
 
     for (int i = 0; i < 50; ++i) {
-      random_walk(t, 50);
+      // std::cout << i << std::endl;
+      random_walk_cache(t, 50);
     }
 
     debug();

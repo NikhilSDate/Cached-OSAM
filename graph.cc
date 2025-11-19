@@ -1,4 +1,6 @@
 #include "graph.h"
+#include "sam.h"
+#include "tree.h"
 #include <iostream>
 
 int make_random_graph(int n, int d) {
@@ -20,6 +22,7 @@ int make_random_graph(int n, int d) {
     auto [t_, wb, b] = deref(out_tree);
     write(vertices[i], b);
   }
+
   return t;
 }
 
@@ -29,5 +32,13 @@ void random_walk(int& t, int steps) {
   for (int i = 0; i < steps; ++i) {
     int m = uniform_leaf(n);
     n = m;
+  }
+}
+
+void random_walk_cache(int& t, int steps) {
+  block* n = deref_cache(&t);
+  n = uniform_leaf_cache(n);
+  for (int i = 0; i < steps; ++i) {
+    n = uniform_leaf_cache(n);
   }
 }

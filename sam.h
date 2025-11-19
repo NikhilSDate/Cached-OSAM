@@ -64,6 +64,8 @@ void destroy(int p);
  */
 std::tuple<int, int, block> deref(int p);
 
+block* deref_cache(int* x);
+void cache_evict(int x);
 
 inline void save(int& p, block data) {
   auto [p_, where, b] = deref(p);

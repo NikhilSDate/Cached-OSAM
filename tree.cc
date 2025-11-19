@@ -76,6 +76,26 @@ void print_tree(int indent, int tree) {
 //}
 
 
+block* get_leaf_cache(int which_leaf, block* b) {
+  while (true) {
+    int height = (*b)[1];
+    if (height == 1) {
+      break;
+    }
+    int max_leaves_per_child = 1;
+    for (int i = 0; i < height - 1; ++i) {
+      max_leaves_per_child *= fan_out;
+    }
+
+    int child = which_leaf / max_leaves_per_child;
+    b = deref_cache(&((*b)[child + 4]));
+    
+    // here the old b is destroyed, so it should get evicted
+    which_leaf = which_leaf % max_leaves_per_child;
+  }
+  return deref_cache(&(*b)[which_leaf + 4]);
+}
+
 int get_leaf(int which_leaf, int write_back, block& b) {
   int height = b[1];
   if (height == 1) {
@@ -115,4 +135,9 @@ int uniform_leaf(int& t) {
 
   int which_leaf = rand() % b[3];
   return get_leaf(which_leaf, wb, b);
+}
+
+block* uniform_leaf_cache(block* b) {
+  int which_leaf = rand() % (*b)[3];
+  return get_leaf_cache(which_leaf, b);
 }

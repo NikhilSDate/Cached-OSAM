@@ -17,5 +17,6 @@ void print_tree(int indent, int tree);
  */
 int get_leaf(int which, int& t);
 int uniform_leaf(int& t);
+block* uniform_leaf_cache(block* b);
 
 #endif
