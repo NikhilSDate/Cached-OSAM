@@ -1,8 +1,10 @@
 #ifndef SAM_H__
 #define SAM_H__
 
-#include "cache.h"
 #include "types.h"
+#include <unordered_map>
+#include <cassert>
+#include <iostream>
 
 // Initialize SAM with `n` slots.
 void init(int n);
@@ -55,13 +57,38 @@ void destroy(int p);
  */
 std::tuple<int, int, block> deref(int p);
 
-CachePtr deref_cache(int* x);
-
 inline void save(int& p, block data) {
   auto [p_, where, b] = deref(p);
   p = p_;
   write(where, data);
 }
 
+class CachePtr;
+
+CachePtr deref_cache(int* x);
+
+class CachePtr {
+public:
+    // Default constructor
+    CachePtr(int addr);
+
+    // Copy constructor
+    CachePtr(const CachePtr& other);
+
+    // Copy assignment
+    CachePtr& operator=(const CachePtr& other);
+
+    CachePtr deref_at(int idx);
+
+    int at(int idx);
+
+    // Destructor
+    ~CachePtr();
+
+private:
+    int addr_;
+
+    void release();
+};
 
 #endif

@@ -1,5 +1,4 @@
 #include "graph.h"
-#include "cache.h"
 #include "sam.h"
 #include "tree.h"
 #include <iostream>

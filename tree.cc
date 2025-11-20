@@ -1,5 +1,4 @@
 #include "tree.h"
-#include "cache.h"
 #include "sam.h"
 #include <cassert>
 #include <iostream>
@@ -91,8 +90,8 @@ CachePtr get_leaf_cache(int which_leaf, CachePtr b) {
 
     int child = which_leaf / max_leaves_per_child;
     b = b.deref_at(child);
-  
     // here the old b is destroyed, so it should get evicted
+    
     which_leaf = which_leaf % max_leaves_per_child;
   }
   return b.deref_at(which_leaf);

@@ -2,7 +2,7 @@
 #define TREE_H__
 
 #include "types.h"
-#include "cache.h"
+#include "sam.h"
 #include <vector>
 
 constexpr std::size_t fan_out = 6;

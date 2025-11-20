@@ -1,5 +1,4 @@
 #include "sam.h"
-#include "cache.h"
 #include <cstdlib>
 #include <cstring>
 #include <algorithm>
@@ -11,6 +10,7 @@ int size;
 int next;
 block* sam;
 bool* used;
+std::unordered_map<int, std::pair<block*, size_t>> cache;
 
 int reads = 0;
 int writes = 0;
@@ -305,5 +305,73 @@ CachePtr deref_cache(int* x) {
     return splay_cache(x_, s, p);
   }
 }
+
+void cache_evict(int x) {
+  if (!cache.contains(x)) {
+    return;
+  }
+  auto data = cache.at(x);
+  write(x, *(data.first));
+  delete data.first;
+  cache.erase(x);
+}
+
+CachePtr deref_cache(int* x);
+
+
+    // Default constructor
+CachePtr::CachePtr(int addr): addr_{addr} {
+  cache.at(addr).second += 1;
+}
+
+    // Copy constructor
+CachePtr::CachePtr(const CachePtr& other)
+    : addr_(other.addr_)
+{
+    cache.at(addr_).second += 1;
+}
+
+    // Copy assignment
+CachePtr& CachePtr::operator=(const CachePtr& other)
+{
+    if (this != &other) {
+        // Decrement old reference
+        release();
+
+        // Copy from other
+        addr_ = other.addr_;
+
+        // Increment new reference
+        cache.at(addr_).second += 1;
+    }
+    return *this;
+}
+
+CachePtr CachePtr::deref_at(int idx) {
+    block* b = cache.at(addr_).first;
+    return deref_cache(&(*b)[idx + 4]);
+}
+
+int CachePtr::at(int idx) {
+    assert(idx < 4);
+    block* b = cache.at(addr_).first;
+    return (*b)[idx];
+}
+
+  // Destructor
+CachePtr::~CachePtr()
+{
+    release();
+}
+
+
+void CachePtr::release()
+{
+    cache.at(addr_).second -= 1;
+    if (cache.at(addr_).second == 0) {
+        cache_evict(addr_);
+    }
+}
+
 
 
