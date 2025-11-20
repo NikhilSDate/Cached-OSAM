@@ -1,4 +1,5 @@
 #include "graph.h"
+#include "cache.h"
 #include "sam.h"
 #include "tree.h"
 #include <iostream>
@@ -36,7 +37,7 @@ void random_walk(int& t, int steps) {
 }
 
 void random_walk_cache(int& t, int steps) {
-  block* n = deref_cache(&t);
+  CachePtr n = deref_cache(&t);
   n = uniform_leaf_cache(n);
   for (int i = 0; i < steps; ++i) {
     n = uniform_leaf_cache(n);

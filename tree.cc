@@ -1,4 +1,6 @@
 #include "tree.h"
+#include "cache.h"
+#include "sam.h"
 #include <cassert>
 #include <iostream>
 
@@ -76,9 +78,9 @@ void print_tree(int indent, int tree) {
 //}
 
 
-block* get_leaf_cache(int which_leaf, block* b) {
+CachePtr get_leaf_cache(int which_leaf, CachePtr b) {
   while (true) {
-    int height = (*b)[1];
+    int height = b.at(1);
     if (height == 1) {
       break;
     }
@@ -88,12 +90,12 @@ block* get_leaf_cache(int which_leaf, block* b) {
     }
 
     int child = which_leaf / max_leaves_per_child;
-    b = deref_cache(&((*b)[child + 4]));
-    
+    b = b.deref_at(child);
+  
     // here the old b is destroyed, so it should get evicted
     which_leaf = which_leaf % max_leaves_per_child;
   }
-  return deref_cache(&(*b)[which_leaf + 4]);
+  return b.deref_at(which_leaf);
 }
 
 int get_leaf(int which_leaf, int write_back, block& b) {
@@ -137,7 +139,7 @@ int uniform_leaf(int& t) {
   return get_leaf(which_leaf, wb, b);
 }
 
-block* uniform_leaf_cache(block* b) {
-  int which_leaf = rand() % (*b)[3];
+CachePtr uniform_leaf_cache(CachePtr b) {
+  int which_leaf = rand() % b.at(3);
   return get_leaf_cache(which_leaf, b);
 }

@@ -1,7 +1,8 @@
 #ifndef TREE_H__
 #define TREE_H__
 
-#include "sam.h"
+#include "types.h"
+#include "cache.h"
 #include <vector>
 
 constexpr std::size_t fan_out = 6;
@@ -17,6 +18,7 @@ void print_tree(int indent, int tree);
  */
 int get_leaf(int which, int& t);
 int uniform_leaf(int& t);
-block* uniform_leaf_cache(block* b);
+
+CachePtr uniform_leaf_cache(CachePtr b);
 
 #endif

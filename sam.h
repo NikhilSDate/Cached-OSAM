@@ -1,17 +1,8 @@
 #ifndef SAM_H__
 #define SAM_H__
 
-#include <array>
-#include <tuple>
-
-constexpr std::size_t block_size = 16;
-
-using block = std::array<int, block_size>;
-
-enum class block_type {
-  INNER,
-  DATA,
-};
+#include "cache.h"
+#include "types.h"
 
 // Initialize SAM with `n` slots.
 void init(int n);
@@ -64,8 +55,7 @@ void destroy(int p);
  */
 std::tuple<int, int, block> deref(int p);
 
-block* deref_cache(int* x);
-void cache_evict(int x);
+CachePtr deref_cache(int* x);
 
 inline void save(int& p, block data) {
   auto [p_, where, b] = deref(p);
