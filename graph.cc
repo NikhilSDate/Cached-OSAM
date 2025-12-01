@@ -26,7 +26,7 @@ int make_random_graph(int n, int d) {
   return t;
 }
 
-void random_walk(int& t, int steps) {
+void random_walk(int &t, int steps) {
   int n = uniform_leaf(t);
 
   for (int i = 0; i < steps; ++i) {
@@ -35,8 +35,8 @@ void random_walk(int& t, int steps) {
   }
 }
 
-void random_walk_cache(int& t, int steps) {
-  CachePtr n = deref_cache(&t);
+void random_walk_cache(int &t, int steps) {
+  CacheObj n = deref_cache(&t);
   n = uniform_leaf_cache(n);
   for (int i = 0; i < steps; ++i) {
     n = uniform_leaf_cache(n);

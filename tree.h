@@ -1,8 +1,8 @@
 #ifndef TREE_H__
 #define TREE_H__
 
-#include "types.h"
 #include "sam.h"
+#include "types.h"
 #include <vector>
 
 constexpr std::size_t fan_out = 6;
@@ -16,9 +16,9 @@ void print_tree(int indent, int tree);
  * This procedure copies the accessed leaf node of the tree, such that the tree
  * can be traversed to the same leaf again.
  */
-int get_leaf(int which, int& t);
-int uniform_leaf(int& t);
+int get_leaf(int which, int &t);
+int uniform_leaf(int &t);
 
-CachePtr uniform_leaf_cache(CachePtr b);
+CacheObj uniform_leaf_cache(CacheObj b);
 
 #endif

@@ -2,9 +2,9 @@
 #define SAM_H__
 
 #include "types.h"
-#include <unordered_map>
 #include <cassert>
 #include <iostream>
+#include <unordered_map>
 
 // Initialize SAM with `n` slots.
 void init(int n);
@@ -21,14 +21,13 @@ void debug_header();
 // Print SAM usage.
 void debug();
 
-
 /**
  * Set aside a pointer with no pointee.
  */
 int alloc();
 
 /**
- * Write block `b` to pointer `p`. 
+ * Write block `b` to pointer `p`.
  */
 void write(int p, block b);
 
@@ -57,38 +56,65 @@ void destroy(int p);
  */
 std::tuple<int, int, block> deref(int p);
 
-inline void save(int& p, block data) {
+inline void save(int &p, block data) {
   auto [p_, where, b] = deref(p);
   p = p_;
   write(where, data);
 }
 
+class CacheObj;
 class CachePtr;
 
-CachePtr deref_cache(int* x);
+CacheObj deref_cache(int *x);
 
-class CachePtr {
+class CacheObj {
 public:
-    // Default constructor
-    CachePtr(int addr);
+  // Default constructor
+  CacheObj(int addr);
 
-    // Copy constructor
-    CachePtr(const CachePtr& other);
+  // Copy constructor
+  CacheObj(const CacheObj &other);
 
-    // Copy assignment
-    CachePtr& operator=(const CachePtr& other);
+  // Copy assignment
+  CacheObj &operator=(const CacheObj &other);
 
-    CachePtr deref_at(int idx);
+  CacheObj deref_at(int idx);
 
-    int at(int idx);
+  int at(int idx);
 
-    // Destructor
-    ~CachePtr();
+  void set(int idx, int val);
+
+  CachePtr ptr_at(int idx);
+
+  // Destructor
+  ~CacheObj();
 
 private:
-    int addr_;
+  int addr_;
 
-    void release();
+  void release();
+};
+
+class CachePtr {
+  public:
+  CachePtr(int addr, int idx);
+
+  // Copy constructor
+  CachePtr(const CachePtr &other);
+
+  // Copy assignment
+  CachePtr &operator=(const CachePtr &other);
+
+  CacheObj deref();
+
+  void set(CachePtr other);
+
+  CacheObj alloc_object();
+
+  ~CachePtr();
+  private:
+    int addr_;
+    int idx_;
 };
 
 #endif

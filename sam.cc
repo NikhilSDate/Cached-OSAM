@@ -1,16 +1,18 @@
 #include "sam.h"
+#include "types.h"
+#include <algorithm>
+#include <cassert>
 #include <cstdlib>
 #include <cstring>
-#include <algorithm>
-#include <unordered_map>
 #include <iostream>
-#include <cassert>
+#include <unordered_map>
+#include <utility>
 
 int size;
 int next;
-block* sam;
-bool* used;
-std::unordered_map<int, std::pair<block*, size_t>> cache;
+block *sam;
+bool *used;
+std::unordered_map<int, std::pair<block *, size_t>> cache;
 
 int reads = 0;
 int writes = 0;
@@ -25,7 +27,7 @@ void init(int n) {
   next = 0;
   sam = new block[n];
   used = new bool[n];
-  memset(used, 0, n*sizeof(bool));
+  memset(used, 0, n * sizeof(bool));
 }
 
 void clear() {
@@ -35,18 +37,10 @@ void clear() {
 }
 
 void debug_header() {
-  std::cout << "READS"
-    << "\t" << "WRITES"
-    << "\t" << "ALLOCS"
-    << '\n';
+  std::cout << "READS" << "\t" << "WRITES" << "\t" << "ALLOCS" << '\n';
 }
 
-void debug() {
-  std::cout << reads
-    << "\t" << writes 
-    << "\t" << allocs
-    << '\n';
-}
+void debug() { std::cout << reads << "\t" << writes << "\t" << allocs << '\n'; }
 
 void debug_reset() {
   reads = 0;
@@ -78,28 +72,44 @@ int alloc() {
   return next++;
 }
 
-
-
 void link(int l, int r, int p) {
-  write(l, { (int)block_type::INNER, p, r });
-  write(r, { (int)block_type::INNER, p, l });
+  write(l, {(int)block_type::INNER, p, r});
+  write(r, {(int)block_type::INNER, p, l});
 }
-
 
 std::pair<int, int> copy(int p) {
   int l = alloc();
   int r = alloc();
   link(l, r, p);
-  return { l, r };
+  return {l, r};
+}
+
+int copy_cache(int* p) {
+  int l = alloc();
+  int r = alloc();
+  link(l, r, *p);
+  *p = r;
+  return l;
 }
 
 void destroy(int x) {
+  if (cache.contains(x)) {
+    return;
+  }
   const auto bl = read(x);
   if ((block_type)bl[0] == block_type::DATA) {
     // DO NOTHING
   } else {
     const auto p = bl[1];
     const auto s = bl[2];
+
+    if (cache.contains(p)) {
+      int dummy = alloc();
+      write(dummy, {(int)block_type::INNER, p, s});
+      write(s, {(int)block_type::INNER, p, dummy});
+      return;
+    }
+
     const auto bl2 = read(p);
     if ((block_type)bl2[0] == block_type::DATA) {
       write(s, bl2);
@@ -109,6 +119,10 @@ void destroy(int x) {
       link(s, s_, p_);
     }
   }
+}
+
+void destroy_cache(int x) {
+
 }
 
 /**
@@ -133,7 +147,7 @@ std::pair<int, block> splay(int a, int b, int x) {
     if (tx == block_type::DATA) {
       int x_ = alloc();
       link(a, b, x_);
-      return { x_, bl };
+      return {x_, bl};
     }
 
     const auto bl2 = read(y);
@@ -157,7 +171,7 @@ std::pair<int, block> splay(int a, int b, int x) {
       link(b, c, y_);
       link(a, y_, x_);
 
-      return { x_, bl2 };
+      return {x_, bl2};
     }
 
     /**
@@ -188,13 +202,13 @@ std::pair<int, block> splay(int a, int b, int x) {
 // else puts into cache
 // in either case, returns the writeback address/cache tag
 int counter_cache = 0;
-CachePtr splay_cache(int a, int b, int x) {
+CacheObj splay_cache(int a, int b, int x) {
   while (true) {
     ++counter;
 
     if (cache.contains(x)) {
       link(a, b, x);
-      return CachePtr(x);
+      return CacheObj(x);
     }
 
     auto bl = read(x);
@@ -209,15 +223,15 @@ CachePtr splay_cache(int a, int b, int x) {
       // put data into the cache
       bl[15] = x_;
       cache[x_] = {new block(bl), 0};
-      return CachePtr(x_);
+      return CacheObj(x_);
     }
 
     if (cache.contains(y)) {
       int x_ = alloc();
       link(a, b, x_);
       link(x_, c, y);
-      
-      return CachePtr(y);
+
+      return CacheObj(y);
     }
 
     auto bl2 = read(y);
@@ -243,7 +257,7 @@ CachePtr splay_cache(int a, int b, int x) {
 
       bl2[15] = x_;
       cache[x_] = {new block(bl2), 0};
-      return CachePtr(x_);
+      return CacheObj(x_);
     }
 
     /**
@@ -278,16 +292,16 @@ std::tuple<int, int, block> deref(int x) {
 
   const auto x_ = alloc();
   if (t == block_type::DATA) {
-    return { x_, x_, bl };
+    return {x_, x_, bl};
   } else {
     const auto [where, b] = splay(x_, s, p);
-    return { x_, where, b };
+    return {x_, where, b};
   }
 }
 
-CachePtr deref_cache(int* x) {
+CacheObj deref_cache(int *x) {
   if (cache.contains(*x)) {
-    return CachePtr(*x);
+    return CacheObj(*x);
   }
 
   auto bl = read(*x);
@@ -300,7 +314,7 @@ CachePtr deref_cache(int* x) {
 
   if (t == block_type::DATA) {
     cache[x_] = {new block(bl), 0};
-    return CachePtr(x_);
+    return CacheObj(x_);
   } else {
     return splay_cache(x_, s, p);
   }
@@ -316,62 +330,118 @@ void cache_evict(int x) {
   cache.erase(x);
 }
 
-CachePtr deref_cache(int* x);
+CacheObj deref_cache(int *x);
 
+// Default constructor
+CacheObj::CacheObj(int addr) : addr_{addr} { cache.at(addr).second += 1; }
 
-    // Default constructor
-CachePtr::CachePtr(int addr): addr_{addr} {
+// Copy constructor
+CacheObj::CacheObj(const CacheObj &other) : addr_(other.addr_) {
+  cache.at(addr_).second += 1;
+}
+
+// Copy assignment
+CacheObj &CacheObj::operator=(const CacheObj &other) {
+  if (this != &other) {
+    // Decrement old reference
+    release();
+
+    // Copy from other
+    addr_ = other.addr_;
+
+    // Increment new reference
+    cache.at(addr_).second += 1;
+  }
+  return *this;
+}
+
+CacheObj CacheObj::deref_at(int idx) {
+  block *b = cache.at(addr_).first;
+  return deref_cache(&(*b)[idx + 4]);
+}
+
+int CacheObj::at(int idx) {
+  assert(idx < 4);
+  block *b = cache.at(addr_).first;
+  return (*b)[idx];
+}
+
+void CacheObj::set(int idx, int val) {
+  block *b = cache.at(addr_).first;
+  (*b)[idx] = val;
+}
+
+CachePtr CacheObj::ptr_at(int idx) {
+  return CachePtr(addr_, idx);
+}
+
+// Destructor
+CacheObj::~CacheObj() { release(); }
+
+void CacheObj::release() {
+  cache.at(addr_).second -= 1;
+  if (cache.at(addr_).second == 0) {
+    cache_evict(addr_);
+  }
+}
+
+// Default constructor
+CachePtr::CachePtr(int addr, int idx) : addr_{addr}, idx_{idx} {
   cache.at(addr).second += 1;
 }
 
-    // Copy constructor
-CachePtr::CachePtr(const CachePtr& other)
-    : addr_(other.addr_)
-{
-    cache.at(addr_).second += 1;
+// Copy constructor
+CachePtr::CachePtr(const CachePtr &other) : addr_(other.addr_), idx_(other.idx_) {
+  cache.at(addr_).second += 1;
 }
 
-    // Copy assignment
-CachePtr& CachePtr::operator=(const CachePtr& other)
-{
-    if (this != &other) {
-        // Decrement old reference
-        release();
-
-        // Copy from other
-        addr_ = other.addr_;
-
-        // Increment new reference
-        cache.at(addr_).second += 1;
-    }
-    return *this;
-}
-
-CachePtr CachePtr::deref_at(int idx) {
-    block* b = cache.at(addr_).first;
-    return deref_cache(&(*b)[idx + 4]);
-}
-
-int CachePtr::at(int idx) {
-    assert(idx < 4);
-    block* b = cache.at(addr_).first;
-    return (*b)[idx];
-}
-
-  // Destructor
-CachePtr::~CachePtr()
-{
-    release();
-}
-
-
-void CachePtr::release()
-{
+CachePtr &CachePtr::operator=(const CachePtr &other) {
+  if (this != &other) {
+    // Decrement old reference
     cache.at(addr_).second -= 1;
     if (cache.at(addr_).second == 0) {
-        cache_evict(addr_);
+      cache_evict(addr_);
     }
+
+    // Copy from other
+    addr_ = other.addr_;
+    idx_ = other.idx_;
+
+    // Increment new reference
+    cache.at(addr_).second += 1;
+  }
+  return *this;
 }
 
+CacheObj CachePtr::deref() {
+  block *b = cache.at(addr_).first;
+  return deref_cache(&(*b)[idx_ + 4]);
+}
 
+void CachePtr::set(CachePtr other) {
+  block *b1 = cache.at(addr_).first;
+  block* b2 = cache.at(other.addr_).first;
+  int* p1 = &(*b1)[idx_ + 4];
+  int* p2 = &(*b1)[other.idx_ + 4];
+  destroy_cache(*p1); // handle case where slot is empty
+  *p1 = copy_cache(p2);
+}
 
+CacheObj CachePtr::alloc_object() {
+  block *b1 = cache.at(addr_).first;
+  int* p1 = &(*b1)[idx_ + 4];
+  destroy_cache(*p1); // handle case where slot is empty
+  int a = alloc();
+  *p1 = a;
+  block b = {(int)block_type::DATA};
+  cache[a] = {new block(b), 0};
+  return CacheObj(a);
+}
+
+// Destructor
+CachePtr::~CachePtr() {
+  cache.at(addr_).second -= 1;
+  if (cache.at(addr_).second == 0) {
+    cache_evict(addr_);
+  }
+}
