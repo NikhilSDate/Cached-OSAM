@@ -332,6 +332,24 @@ void cache_evict(int x) {
 
 CacheObj deref_cache(int *x);
 
+block make_data_block() {
+  block b;
+  b[0] = (int)block_type::DATA;
+  for (int i = 1; i < b.size(); i++) {
+    b[i] = -1;
+  }
+  return b;
+}
+
+
+CacheObj::CacheObj() {
+  int addr = alloc();
+  block b = make_data_block();
+
+  cache[addr] = {new block(b), 1}; // one reference
+  addr_ = addr;
+}
+
 // Default constructor
 CacheObj::CacheObj(int addr) : addr_{addr} { cache.at(addr).second += 1; }
 
@@ -419,23 +437,33 @@ CacheObj CachePtr::deref() {
 }
 
 void CachePtr::set(CachePtr other) {
+  destroy();
   block *b1 = cache.at(addr_).first;
   block* b2 = cache.at(other.addr_).first;
   int* p1 = &(*b1)[idx_ + 4];
   int* p2 = &(*b1)[other.idx_ + 4];
-  destroy_cache(*p1); // handle case where slot is empty
   *p1 = copy_cache(p2);
 }
 
 CacheObj CachePtr::alloc_object() {
+  destroy();
   block *b1 = cache.at(addr_).first;
   int* p1 = &(*b1)[idx_ + 4];
-  destroy_cache(*p1); // handle case where slot is empty
   int a = alloc();
   *p1 = a;
-  block b = {(int)block_type::DATA};
+  block b = make_data_block();
   cache[a] = {new block(b), 0};
   return CacheObj(a);
+}
+
+void CachePtr::destroy() {
+  block *b = cache.at(addr_).first;
+  int* p = &(*b)[idx_ + 4];
+  if (*p == -1) {
+    // slot is empty
+    return;
+  }
+  destroy_cache(*p); // handle case where slot is empty
 }
 
 // Destructor

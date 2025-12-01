@@ -70,6 +70,8 @@ CacheObj deref_cache(int *x);
 class CacheObj {
 public:
   // Default constructor
+  CacheObj();
+
   CacheObj(int addr);
 
   // Copy constructor
@@ -113,6 +115,8 @@ class CachePtr {
 
   ~CachePtr();
   private:
+    void destroy();
+
     int addr_;
     int idx_;
 };
