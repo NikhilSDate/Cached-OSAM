@@ -373,11 +373,6 @@ CacheObj &CacheObj::operator=(const CacheObj &other) {
   return *this;
 }
 
-CacheObj CacheObj::deref_at(int idx) {
-  block *b = cache.at(addr_).first;
-  return deref_cache(&(*b)[idx + 4]);
-}
-
 int CacheObj::at(int idx) {
   assert(idx < 4);
   block *b = cache.at(addr_).first;
@@ -441,7 +436,7 @@ void CachePtr::set(CachePtr other) {
   block *b1 = cache.at(addr_).first;
   block* b2 = cache.at(other.addr_).first;
   int* p1 = &(*b1)[idx_ + 4];
-  int* p2 = &(*b1)[other.idx_ + 4];
+  int* p2 = &(*b2)[other.idx_ + 4];
   *p1 = copy_cache(p2);
 }
 
@@ -463,7 +458,7 @@ void CachePtr::destroy() {
     // slot is empty
     return;
   }
-  destroy_cache(*p); // handle case where slot is empty
+  destroy_cache(*p); // handle case where slot is not empty
 }
 
 // Destructor

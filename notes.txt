@@ -1,6 +1,0 @@
-get_child(Node* root) {
-    while (!root->leaf) {
-        root = root->child;
-    }
-}
-

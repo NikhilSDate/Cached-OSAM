@@ -80,8 +80,6 @@ public:
   // Copy assignment
   CacheObj &operator=(const CacheObj &other);
 
-  CacheObj deref_at(int idx);
-
   int at(int idx);
 
   void set(int idx, int val);

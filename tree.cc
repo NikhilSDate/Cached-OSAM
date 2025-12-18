@@ -86,12 +86,13 @@ CacheObj get_leaf_cache(int which_leaf, CacheObj b) {
     }
 
     int child = which_leaf / max_leaves_per_child;
-    b = b.deref_at(child);
+    CachePtr p = b.ptr_at(child);
+    b = p.deref();
     // here the old b is destroyed, so it should get evicted
 
     which_leaf = which_leaf % max_leaves_per_child;
   }
-  return b.deref_at(which_leaf);
+  return b.ptr_at(which_leaf).deref();
 }
 
 int get_leaf(int which_leaf, int write_back, block &b) {
