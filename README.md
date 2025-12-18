@@ -6,15 +6,16 @@ This repository implements a "cache" abstraction on top of SAM and "raw" smart p
 
 ```mermaid
 flowchart LR
-    subgraph SAM_Client["SAM Client"]
+    SAM_Client["SAM Client"]
+    SAM_Server["SAM server"]
+
+    SAM_Client <--> SAM_Server
+
+    subgraph SAM_Client
         direction LR
         CSP["Cached SAM Program"]
         CACHE["Cache"]
         CSP <--> CACHE
     end
-
-    SAM_Server["SAM server"]
-
-    CSP <--> SAM_Server
 ```
 
