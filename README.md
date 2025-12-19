@@ -1,6 +1,6 @@
 # Cached OSAM
 
-This repository implements a "cache" abstraction on top of SAM, that we call Cached SAM. The client interface of Cached SAM involves two types: `CacheObj` and `CachePtr`. Using these types and their methods, clients can write SAM programs that are intuitive, guaranteed to be legal with respect to the SAM properties (never read/write an address more than once), and efficient. Efficiency is achieved because Cached SAM provides a kind of move semantics that avoids unnecessary copies of data blocks or pointers. Importantly, Cached SAM also completely abstracts away the underlying SAM/pointer semantics from the user. We describe the components in more detail below:
+This repository implements a "cache" abstraction on top of SAM, that we call Cached SAM. The client interface of Cached SAM involves two types: `CacheObj` and `CachePtr`. Using these types and their methods, the aim is to allow clients to write SAM programs that are intuitive, guaranteed to be legal with respect to the SAM properties (never read/write an address more than once), and efficient. Efficiency is achieved because Cached SAM provides a kind of move semantics that avoids unnecessary copies of data blocks or pointers. Importantly, Cached SAM also completely abstracts away the underlying SAM/pointer semantics from the user. We describe the components in more detail below:
 
 ## High-level structure
 
@@ -95,7 +95,7 @@ The code provides C++ and Python implementations of the Cached SAM interface. Bo
 
 ### Python implementation
 
-- The Python implementation is mostly a direct translation of the C++ implementation, with a couple of "hacks" to support the lack of references and RAII
+- The Python implementation (located in `python-impl`) is mostly a direct translation of the C++ implementation, with a couple of "hacks" to support the lack of references and RAII
 
 - Running `main.py` will perform the same random graph walk benchmark as the C++ implementation. This should give almost exactly the same reads/writes/allocs counts as the `C++` version, with any minor difference most probably due to the point below. 
 
