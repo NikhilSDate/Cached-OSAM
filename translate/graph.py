@@ -3,6 +3,7 @@ Graph operations - random graph construction and random walks
 """
 from typing import List
 import sam
+from sam import _sam
 import tree
 from sam_types import Block
 
@@ -36,6 +37,11 @@ def make_random_graph(n: int, d: int) -> int:
 
     return t.value
 
+def make_random_graph_cache(n: int, d: int) -> sam.CacheObj:
+    t = [make_random_graph(n, d)]
+    return _sam.deref_cache(t, 0)
+
+
 def random_walk(t: tree.Ref, steps: int):
     """
     Perform a random walk on the graph for 'steps' steps.
@@ -51,16 +57,12 @@ def random_walk(t: tree.Ref, steps: int):
         m = tree.uniform_leaf(n)
         n.value = m
 
-def random_walk_cache(t: tree.Ref, steps: int):
+def random_walk_cache(n: sam.CacheObj, steps: int):
     """
     Perform a random walk using cached objects.
     Modifies t in place (via Ref).
     """
     # deref_cache needs to modify t, so we create a temporary single-element list
-    t_ref = [t.value]
-    n = sam._sam.deref_cache(t_ref, 0)
-    t.value = t_ref[0]
-
     # Get first vertex
     n = tree.uniform_leaf_cache(n)
 

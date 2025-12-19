@@ -72,6 +72,35 @@ Some important methods on `CacheObj` are `at(idx)`, which returns a data value i
 
 Important methods on `CachePtr` are `deref()`, which returns a `CacheObj` referencing the data block pointed to by the `CachePtr` and `set(CachePtr p')`, sets the value of the cache pointer to a *copy* of a pointer referenced by `p'`, in addition to destroying the currently referenced pointer if any. Note that internally, the value of the raw SAM smart pointer must *change* on a deference, however this is completely abstracted away by the cache interface. This is one example of how the cache interface makes programming simpler. 
 
+The client can freely copy `CachePtr`/`CacheObj` instances themselves; we use reference counting to ensure that the cache only evicts a block when no `CachePtr`/`CacheObj` are referencing it. 
+
+### Creating CacheObj and the root object
+
+We can allocate new SAM data blocks by creating `CacheObj` using the default constructor (see `test_cacheptr`) in `main.cc`. Calling the default constructor multiple times creates multiple objects. 
+
+A quirk of this design is that, since we can only dereference/set/destroy/allocate pointers already contained in data blocks, we need a top-level root `CacheObj` from where we can reach other `CacheObj`. The root `CacheObj` should always be in the cache. 
+
+## Implementation
+
+The code provides C++ and Python implementations of the Cached SAM interface. Both are essentially equivalent, but I think the C++ implementation is more straightforward due to built-in support for RAII, so I would suggest only looking at the Python implementation if really necessary. 
+
+### C++ Implementation
+
+- The provided Makefile can be used to compile the C++ implementation
+
+- The CacheObj/CachePtr classes are defined in `sam.cc` and `sam.h`. 
+
+- `main.cc` implements a graph random walk benchmark using `CacheObj/CachePtr`. The key function is `get_leaf_cache` in `tree.cc`. 
+
+- `CachePtr` and `CacheObj` are implemented using reference counting and RAII. This ensures that when all `CachePtr`/`CacheObj` that reference some block in the cache go out of scope or are deleted, the block is evicted (and it is not evicted before this happens)
+
+### Python implementation
+
+- The Python implementation is mostly a literal translation of the C++ implementation, with a couple of "hacks" to support the lack of references and RAII
+
+- Running `main.py` will perform the same random graph walk benchmark as the C++ implementation. 
+
+- Since Python does not have RAII, we call the destructors of `CacheObj`/`CachePtr` (which decrement the refcount and evict from cache if it hits 0) in the `__del__` function of each class, which is triggered when the object is garbage collected. 
 
 
 

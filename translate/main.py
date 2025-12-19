@@ -19,16 +19,16 @@ def main():
         graph_size = 1 << lgn
         d = 100
 
-        t = tree.Ref(graph.make_random_graph(graph_size, d))
+        n = graph.make_random_graph_cache(graph_size, d)
 
         # PRIME THE GRAPH
         for i in range(graph_size):
-            graph.random_walk_cache(t, 20)
+            graph.random_walk_cache(n, 20)
 
         sam.debug_reset()
 
         for i in range(50):
-            graph.random_walk_cache(t, 50)
+            graph.random_walk_cache(n, 50)
 
         sam.debug()
         sam.clear()
